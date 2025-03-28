@@ -71,7 +71,7 @@ export function createRuntime(options: RuntimeOptions): Runtime {
     modelService,
     monitorService,
     memoryService,
-    plugins: options.plugins
+    plugins: [options.memory.getPlugin(), ...options.plugins]
   });
 
   for (const model of options.models) {
@@ -614,8 +614,16 @@ export class Runtime {
     initialContext: UserInputContext,
     platformContext?: AgentContext["platformContext"]
   ): Promise<void> {
+    // Get conversationId from memory service
+    const conversationId = await this.memoryService.getOrCreateConversation(
+      initialContext.user,
+      initialContext.pluginId
+    );
+
+    // Add conversationId to platform context metadata
     const context: AgentContext = {
       contextChain: [initialContext],
+      conversationId,
       platformContext,
       eventQueue: this.queueInterface
     };
